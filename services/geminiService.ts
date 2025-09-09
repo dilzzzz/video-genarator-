@@ -1,15 +1,11 @@
-import { GoogleGenAI } from "@google/genai";
 import { GenerateVideosOperationResponse } from "@google/genai/dist/types/server/v1beta";
 
-if (!process.env.API_KEY) {
-  // In a real app, you might want to show this error in the UI.
-  // For this context, throwing an error is sufficient.
-  console.error("API_KEY environment variable not set");
-}
+// The backend URL will be provided by cPanel's Node.js App setup.
+// You MUST replace this with the actual URL for your deployed backend.
+// It will look something like 'https://yourdomain.com:12345'
+const BACKEND_URL = 'https://your-backend-app-url.com'; // <-- IMPORTANT: CHANGE THIS
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
-
-const pollOperation = async (operation: GenerateVideosOperationResponse, setLoadingMessage: (message: string) => void): Promise<GenerateVideosOperationResponse> => {
+const pollOperationOnBackend = async (operation: GenerateVideosOperationResponse, setLoadingMessage: (message: string) => void): Promise<GenerateVideosOperationResponse> => {
   let currentOperation = operation;
   let pollCount = 0;
   const messages = [
@@ -28,10 +24,22 @@ const pollOperation = async (operation: GenerateVideosOperationResponse, setLoad
     pollCount++;
     await new Promise(resolve => setTimeout(resolve, 10000)); // Poll every 10 seconds
     try {
-      currentOperation = await ai.operations.getVideosOperation({ operation: currentOperation });
+        const response = await fetch(`${BACKEND_URL}/api/poll-operation`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ operation: currentOperation }),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Polling failed');
+        }
+        currentOperation = await response.json();
     } catch (error) {
-        console.error("Error polling operation:", error);
-        throw new Error("Failed to get video generation status. Please try again later.");
+        console.error("Error polling operation from backend:", error);
+        throw new Error("Failed to get video generation status from the server. Please try again later.");
     }
   }
   return currentOperation;
@@ -47,36 +55,32 @@ export const generateVideoFromScript = async (
   setLoadingMessage: (message: string) => void
 ): Promise<string> => {
   try {
-    setLoadingMessage("Initiating video generation...");
-    
-    const audioClauses = [];
-    if (voice && voice !== 'None') {
-        audioClauses.push(`a ${voice.toLowerCase()} voiceover reading the script`);
-    }
+    setLoadingMessage("Sending script to the AI director...");
 
-    if (backgroundMusic.trim()) {
-        audioClauses.push(`background music described as: "${backgroundMusic}"`);
-    }
-
-    let prompt: string;
-    if (audioClauses.length > 0) {
-        const audioDescription = audioClauses.join(' and ');
-        prompt = `Generate a ${creativeStyle.toLowerCase()}, high-quality ${videoLength}-second video based on the following script: "${script}". The video must have a full audio track containing ${audioDescription}.`;
-    } else {
-        prompt = `Generate a ${creativeStyle.toLowerCase()}, high-quality, silent ${videoLength}-second video based on the following script: "${script}". The video must have no audio track.`;
-    }
-
-    let operation = await ai.models.generateVideos({
-      model: 'veo-2.0-generate-001',
-      prompt: prompt,
-      config: {
-        numberOfVideos: 1,
-        aspectRatio: aspectRatio,
-      }
+    const response = await fetch(`${BACKEND_URL}/api/generate-video`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            script,
+            aspectRatio,
+            videoLength,
+            creativeStyle,
+            voice,
+            backgroundMusic
+        }),
     });
 
+    if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to start video generation.');
+    }
+
+    const initialOperation: GenerateVideosOperationResponse = await response.json();
+
     setLoadingMessage("Video generation started. The process is now running in the background.");
-    const completedOperation = await pollOperation(operation, setLoadingMessage);
+    const completedOperation = await pollOperationOnBackend(initialOperation, setLoadingMessage);
 
     if (completedOperation.error) {
         throw new Error(`Video generation failed: ${completedOperation.error.message || 'Unknown reason'}`);
@@ -86,18 +90,21 @@ export const generateVideoFromScript = async (
     if (!downloadLink) {
       throw new Error("Video generation succeeded, but no download link was returned.");
     }
-
+    
+    // The download link from Gemini already works, we can use it directly
+    // The API key is not needed here as the link is temporary and signed
     setLoadingMessage("Downloading the final video...");
-    const response = await fetch(`${downloadLink}&key=${process.env.API_KEY}`);
-    if (!response.ok) {
-        throw new Error(`Failed to download video. Server responded with: ${response.statusText}`);
+    const videoResponse = await fetch(downloadLink);
+    if (!videoResponse.ok) {
+        throw new Error(`Failed to download video. Server responded with: ${videoResponse.statusText}`);
     }
 
-    const videoBlob = await response.blob();
+    const videoBlob = await videoResponse.blob();
     const videoUrl = URL.createObjectURL(videoBlob);
     
     setLoadingMessage("Video ready!");
     return videoUrl;
+
   } catch (error) {
     console.error("Error in generateVideoFromScript:", error);
     if (error instanceof Error) {
