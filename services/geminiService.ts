@@ -1,11 +1,19 @@
-import { GenerateVideosOperationResponse } from "@google/genai/dist/types/server/v1beta";
+// Fix: Corrected import from 'GenerateVideosOperationResponse' to 'GenerateVideosOperation' as the former is not a valid export.
+import { GenerateVideosOperation } from "@google/genai";
 
-// The backend URL will be provided by cPanel's Node.js App setup.
-// You MUST replace this with the actual URL for your deployed backend.
-// It will look something like 'https://yourdomain.com:12345'
-const BACKEND_URL = 'https://your-backend-app-url.com'; // <-- IMPORTANT: CHANGE THIS
+// =====================================================================================
+// IMPORTANT!!: You MUST change this URL.
+//
+// Step 1: Go to your cPanel -> "Setup Node.js App".
+// Step 2: Find the backend application you created.
+// Step 3: Copy the "Application URL" provided there.
+//         (For example: https://your-app.yourdomain.com)
+// Step 4: Delete the placeholder URL below ('https://geminiaichat.org/')
+//         and paste your actual Application URL in its place.
+// =====================================================================================
+const BACKEND_URL = 'https://geminiaichat.org/'; // <-- CHANGE THIS LINE
 
-const pollOperationOnBackend = async (operation: GenerateVideosOperationResponse, setLoadingMessage: (message: string) => void): Promise<GenerateVideosOperationResponse> => {
+const pollOperationOnBackend = async (operation: GenerateVideosOperation, setLoadingMessage: (message: string) => void): Promise<GenerateVideosOperation> => {
   let currentOperation = operation;
   let pollCount = 0;
   const messages = [
@@ -77,7 +85,7 @@ export const generateVideoFromScript = async (
         throw new Error(errorData.error || 'Failed to start video generation.');
     }
 
-    const initialOperation: GenerateVideosOperationResponse = await response.json();
+    const initialOperation: GenerateVideosOperation = await response.json();
 
     setLoadingMessage("Video generation started. The process is now running in the background.");
     const completedOperation = await pollOperationOnBackend(initialOperation, setLoadingMessage);
@@ -91,8 +99,7 @@ export const generateVideoFromScript = async (
       throw new Error("Video generation succeeded, but no download link was returned.");
     }
     
-    // The download link from Gemini already works, we can use it directly
-    // The API key is not needed here as the link is temporary and signed
+    // The link provided by Gemini is a temporary, pre-signed URL that allows direct download.
     setLoadingMessage("Downloading the final video...");
     const videoResponse = await fetch(downloadLink);
     if (!videoResponse.ok) {
