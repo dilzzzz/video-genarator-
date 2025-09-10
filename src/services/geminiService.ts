@@ -1,7 +1,15 @@
 import { GoogleGenAI, GenerateVideosOperation } from "@google/genai";
 
-// Initialize the Google GenAI client, assuming API_KEY is in the environment
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+// Read the API key from Vite's environment variables
+// Vercel will inject this value during the build process
+const apiKey = import.meta.env.VITE_API_KEY;
+
+if (!apiKey) {
+  throw new Error("VITE_API_KEY is not configured. Please add it to your .env file or Vercel environment variables.");
+}
+
+// Initialize the Google GenAI client
+const ai = new GoogleGenAI({ apiKey });
 
 const pollOperation = async (operation: GenerateVideosOperation, setLoadingMessage: (message: string) => void): Promise<GenerateVideosOperation> => {
   let currentOperation = operation;
@@ -42,11 +50,6 @@ export const generateVideoFromScript = async (
   setLoadingMessage: (message: string) => void
 ): Promise<string> => {
   try {
-    const apiKey = process.env.API_KEY;
-    if (!apiKey) {
-      throw new Error("API_KEY is not configured in the environment. The application cannot connect to the AI service.");
-    }
-    
     setLoadingMessage("Sending script to the AI director...");
 
     // Construct the prompt with all user-defined parameters
