@@ -1,5 +1,5 @@
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 
 interface ScriptInputProps {
   script: string;
@@ -29,8 +29,6 @@ const aspectRatios = [
 
 const videoModels = [
   { value: 'veo-2.0-generate-001', label: 'VEO 2.0', description: 'Balanced quality and speed.' },
-  { value: 'veo-3.0-generate-001', label: 'VEO 3.0', description: 'Highest quality, slower generation.' },
-  { value: 'veo-3.0-fast-generate-001', label: 'VEO 3.0 Fast', description: 'Faster generation, good quality.' },
 ];
 
 const creativeStyles = ['Cinematic', 'Documentary', 'Animated', 'Vibrant', 'Minimalist'];
@@ -56,55 +54,7 @@ export const ScriptInput: React.FC<ScriptInputProps> = ({
   generationsLeft
 }) => {
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
-  const [isCameraOpen, setIsCameraOpen] = useState(false);
-  const [stream, setStream] = useState<MediaStream | null>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    if (isCameraOpen && stream && videoRef.current) {
-        videoRef.current.srcObject = stream;
-    }
-  }, [isCameraOpen, stream]);
-
-  const openCamera = async () => {
-    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-      try {
-        const mediaStream = await navigator.mediaDevices.getUserMedia({ video: true });
-        setStream(mediaStream);
-        setIsCameraOpen(true);
-      } catch (err) {
-        console.error("Error accessing camera: ", err);
-        alert("Could not access the camera. Please check permissions and ensure you are on a secure (HTTPS) connection.");
-      }
-    } else {
-      alert("Your browser does not support camera access.");
-    }
-  };
-
-  const closeCamera = () => {
-      if (stream) {
-          stream.getTracks().forEach(track => track.stop());
-      }
-      setStream(null);
-      setIsCameraOpen(false);
-  };
-
-  const captureImage = () => {
-      if (videoRef.current) {
-          const canvas = document.createElement('canvas');
-          canvas.width = videoRef.current.videoWidth;
-          canvas.height = videoRef.current.videoHeight;
-          const context = canvas.getContext('2d');
-          if (context) {
-              context.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
-              const dataUrl = canvas.toDataURL('image/jpeg');
-              const base64Data = dataUrl.split(',')[1];
-              setImage(base64Data);
-              closeCamera();
-          }
-      }
-  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -158,7 +108,7 @@ export const ScriptInput: React.FC<ScriptInputProps> = ({
         </span>
         {image ? (
           <div className="relative group">
-            <img src={`data:image/jpeg;base64,${image}`} alt="Captured reference" className="rounded-lg w-full max-h-60 object-contain bg-slate-900" />
+            <img src={`data:image/jpeg;base64,${image}`} alt="Uploaded reference" className="rounded-lg w-full max-h-60 object-contain bg-slate-900" />
             <button 
               type="button"
               onClick={() => { setImage(null); }}
@@ -171,7 +121,7 @@ export const ScriptInput: React.FC<ScriptInputProps> = ({
             </button>
           </div>
         ) : (
-          <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
+          <div>
             <input
               type="file"
               ref={fileInputRef}
@@ -185,26 +135,12 @@ export const ScriptInput: React.FC<ScriptInputProps> = ({
               type="button"
               onClick={() => fileInputRef.current?.click()}
               disabled={isLoading}
-              className="w-full flex-1 flex items-center justify-center space-x-2 px-4 py-2 rounded-md font-medium transition-all duration-200 bg-slate-700 hover:bg-slate-600 text-slate-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 focus:ring-offset-slate-900 disabled:opacity-50"
+              className="w-full flex items-center justify-center space-x-2 px-4 py-2 rounded-md font-medium transition-all duration-200 bg-slate-700 hover:bg-slate-600 text-slate-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 focus:ring-offset-slate-900 disabled:opacity-50"
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                 <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clipRule="evenodd" />
               </svg>
               <span>Upload File</span>
-            </button>
-            <button 
-              type="button"
-              onClick={openCamera} 
-              disabled={isLoading} 
-              className="w-full flex-1 flex items-center justify-center space-x-2 px-4 py-2 rounded-md font-medium transition-all duration-200 bg-slate-700 hover:bg-slate-600 text-slate-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 focus:ring-offset-slate-900 disabled:opacity-50"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                <path d="M2 6a2 2 0 012-2h1.586a1 1 0 01.707.293l1.414 1.414a1 1 0 00.707.293H12a2 2 0 012 2v7a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
-                <path d="M15 8a1 1 0 10-2 0v2a1 1 0 102 0V8z" />
-                <path d="M3 10a5 5 0 1110 0 5 5 0 01-10 0z" />
-                <path d="M7 10a3 3 0 116 0 3 3 0 01-6 0z" />
-              </svg>
-              <span>Use Camera</span>
             </button>
           </div>
         )}
@@ -238,7 +174,7 @@ export const ScriptInput: React.FC<ScriptInputProps> = ({
 
       <fieldset>
         <legend className="block text-lg font-medium text-slate-300 mb-3">Video Model</legend>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+        <div className="grid grid-cols-1">
           {videoModels.map(({ value, label, description }) => (
             <div key={value}>
               <input
@@ -262,7 +198,7 @@ export const ScriptInput: React.FC<ScriptInputProps> = ({
           ))}
         </div>
         <p className="text-sm text-slate-500 mt-2">
-          Select the AI model for video generation. Newer models may offer higher quality at the cost of generation time.
+          Select the AI model for video generation.
         </p>
       </fieldset>
 
@@ -371,18 +307,6 @@ export const ScriptInput: React.FC<ScriptInputProps> = ({
           You have <span className="font-bold text-slate-300">{generationsLeft}</span> generation{generationsLeft !== 1 ? 's' : ''} left today.
         </p>
       </div>
-
-      {isCameraOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 animate-fade-in" role="dialog" aria-modal="true">
-          <div className="bg-slate-800 p-4 rounded-lg shadow-2xl w-full max-w-lg mx-4">
-            <video ref={videoRef} autoPlay playsInline className="w-full rounded bg-slate-900"></video>
-            <div className="mt-4 flex justify-around space-x-2">
-              <button type="button" onClick={captureImage} className="flex-1 px-4 py-2 rounded-md font-medium text-white bg-purple-600 hover:bg-purple-700 transition-colors">Take Picture</button>
-              <button type="button" onClick={closeCamera} className="flex-1 px-4 py-2 rounded-md font-medium bg-slate-600 hover:bg-slate-500 text-slate-200 transition-colors">Cancel</button>
-            </div>
-          </div>
-        </div>
-      )}
     </form>
   );
 };
