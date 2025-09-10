@@ -1,5 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { Readable } from 'stream';
+// Fix: Import Buffer to resolve 'Cannot find name 'Buffer'' error.
+import { Buffer } from 'buffer';
 
 export default async function handler(
   req: VercelRequest,
@@ -12,7 +14,8 @@ export default async function handler(
 
   try {
     const { downloadLink } = req.body;
-    const apiKey = process.env.VITE_API_KEY;
+    // Fix: Use process.env.API_KEY as per the coding guidelines.
+    const apiKey = process.env.API_KEY;
 
     if (!downloadLink) {
       return res.status(400).json({ error: 'Missing downloadLink in request body' });

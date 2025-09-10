@@ -10,6 +10,14 @@ export const VideoResult: React.FC<VideoResultProps> = ({ videoUrl, script }) =>
     <div className="space-y-8 animate-fade-in">
       <div>
         <h2 className="text-3xl font-bold text-center mb-4 text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600">Your Video is Ready!</h2>
+      </div>
+
+      <div className="bg-slate-800/50 rounded-xl p-6 shadow-lg border border-slate-700">
+        <h3 className="text-xl font-semibold text-slate-200 mb-3">Original Script</h3>
+        <p className="text-slate-300 italic whitespace-pre-wrap">{script}</p>
+      </div>
+      
+      <div>
         <video
           src={videoUrl}
           controls
@@ -20,10 +28,7 @@ export const VideoResult: React.FC<VideoResultProps> = ({ videoUrl, script }) =>
           Your browser does not support the video tag.
         </video>
       </div>
-      <div className="bg-slate-800/50 rounded-xl p-6 shadow-lg border border-slate-700">
-        <h3 className="text-xl font-semibold text-slate-200 mb-3">Original Script</h3>
-        <p className="text-slate-300 italic whitespace-pre-wrap">{script}</p>
-      </div>
+      
        <div className="text-center pt-4">
           <button
               onClick={() => window.location.reload()}

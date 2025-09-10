@@ -1,5 +1,7 @@
 {
   "name": "AI Script to Video Generator",
   "description": "An application that generates a short video from a user-provided script using the Gemini API. The AI director will interpret your script to create a unique visual narrative.",
-  "requestFramePermissions": []
+  "requestFramePermissions": [
+    "camera"
+  ]
 }

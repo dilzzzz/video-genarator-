@@ -1,3 +1,4 @@
+
 import { GoogleGenAI, GenerateVideosOperation } from "@google/genai";
 
 // Initialize the Google GenAI client, assuming API_KEY is in the environment
@@ -35,10 +36,11 @@ const pollOperation = async (operation: GenerateVideosOperation, setLoadingMessa
 export const generateVideoFromScript = async (
   script: string,
   aspectRatio: string,
-  videoLength: number,
   creativeStyle: string,
   voice: string,
   backgroundMusic: string,
+  videoModel: string,
+  image: string | null,
   setLoadingMessage: (message: string) => void
 ): Promise<string> => {
   try {
@@ -61,20 +63,34 @@ export const generateVideoFromScript = async (
     let prompt;
     if (audioClauses.length > 0) {
         const audioDescription = audioClauses.join(' and ');
-        prompt = `Generate a ${creativeStyle.toLowerCase()}, high-quality ${videoLength}-second video based on the following script: "${script}". The video must have a full audio track containing ${audioDescription}.`;
+        prompt = `Generate a ${creativeStyle.toLowerCase()}, high-quality video based on the following script: "${script}". The video must have a full audio track containing ${audioDescription}.`;
     } else {
-        prompt = `Generate a ${creativeStyle.toLowerCase()}, high-quality, silent ${videoLength}-second video based on the following script: "${script}". The video must have no audio track.`;
+        prompt = `Generate a ${creativeStyle.toLowerCase()}, high-quality, silent video based on the following script: "${script}". The video must have no audio track.`;
     }
 
-    // Call the Gemini API to generate the video
-    const initialOperation = await ai.models.generateVideos({
-      model: 'veo-2.0-generate-001',
+    const generateVideosParams: {
+      model: string;
+      prompt: string;
+      image?: { imageBytes: string; mimeType: string; };
+      config: { numberOfVideos: number; aspectRatio: string; };
+    } = {
+      model: videoModel,
       prompt: prompt,
       config: {
         numberOfVideos: 1,
         aspectRatio: aspectRatio,
       }
-    });
+    };
+
+    if (image) {
+      generateVideosParams.image = {
+        imageBytes: image,
+        mimeType: 'image/jpeg',
+      };
+    }
+
+    // Call the Gemini API to generate the video
+    const initialOperation = await ai.models.generateVideos(generateVideosParams);
 
     setLoadingMessage("Video generation started. The process is now running...");
     const completedOperation = await pollOperation(initialOperation, setLoadingMessage);

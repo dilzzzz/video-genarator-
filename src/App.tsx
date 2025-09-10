@@ -1,4 +1,5 @@
-import React, { useState, useCallback } from 'react';
+
+import React, { useState, useCallback, useEffect } from 'react';
 import { ScriptInput } from './components/ScriptInput';
 import { LoadingDisplay } from './components/LoadingDisplay';
 import { VideoResult } from './components/VideoResult';
@@ -7,17 +8,55 @@ import { generateVideoFromScript } from './services/geminiService';
 const App: React.FC = () => {
   const [script, setScript] = useState<string>('');
   const [aspectRatio, setAspectRatio] = useState<string>('16:9');
-  const [videoLength, setVideoLength] = useState<number>(45);
   const [creativeStyle, setCreativeStyle] = useState<string>('Cinematic');
   const [voice, setVoice] = useState<string>('None');
+  const [videoModel, setVideoModel] = useState<string>('veo-2.0-generate-001');
   const [backgroundMusic, setBackgroundMusic] = useState<string>('');
+  const [image, setImage] = useState<string | null>(null);
   const [originalScript, setOriginalScript] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [loadingMessage, setLoadingMessage] = useState<string>('');
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [generationsLeft, setGenerationsLeft] = useState(5);
+
+  const DAILY_LIMIT = 5;
+
+  const getTodayDateString = () => {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  useEffect(() => {
+    const today = getTodayDateString();
+    try {
+      const storedData = localStorage.getItem('videoGenerationTracker');
+      if (storedData) {
+        const { date, count } = JSON.parse(storedData);
+        if (date === today) {
+          setGenerationsLeft(Math.max(0, DAILY_LIMIT - count));
+        } else {
+          localStorage.setItem('videoGenerationTracker', JSON.stringify({ date: today, count: 0 }));
+          setGenerationsLeft(DAILY_LIMIT);
+        }
+      } else {
+        localStorage.setItem('videoGenerationTracker', JSON.stringify({ date: today, count: 0 }));
+        setGenerationsLeft(DAILY_LIMIT);
+      }
+    } catch (e) {
+      console.error("Failed to read from localStorage:", e);
+      setGenerationsLeft(DAILY_LIMIT);
+    }
+  }, []);
 
   const handleGenerateVideo = useCallback(async () => {
+    if (generationsLeft <= 0) {
+      setError("You have reached your daily limit of 5 videos. Please try again tomorrow.");
+      return;
+    }
     if (!script.trim()) {
       setError('Please enter a script to generate a video.');
       return;
@@ -28,8 +67,22 @@ const App: React.FC = () => {
     setOriginalScript(script);
 
     try {
-      const url = await generateVideoFromScript(script, aspectRatio, videoLength, creativeStyle, voice, backgroundMusic, setLoadingMessage);
+      const url = await generateVideoFromScript(script, aspectRatio, creativeStyle, voice, backgroundMusic, videoModel, image, setLoadingMessage);
       setVideoUrl(url);
+
+      const today = getTodayDateString();
+      try {
+        const storedData = localStorage.getItem('videoGenerationTracker');
+        if (storedData) {
+            const { date, count } = JSON.parse(storedData);
+            const newCount = date === today ? count + 1 : 1;
+            localStorage.setItem('videoGenerationTracker', JSON.stringify({ date: today, count: newCount }));
+            setGenerationsLeft(Math.max(0, DAILY_LIMIT - newCount));
+        }
+      } catch(e) {
+        console.error("Failed to update localStorage:", e);
+      }
+
     } catch (e) {
       const err = e as Error;
       setError(err.message || "An unknown error occurred.");
@@ -37,7 +90,7 @@ const App: React.FC = () => {
       setIsLoading(false);
       setLoadingMessage('');
     }
-  }, [script, aspectRatio, videoLength, creativeStyle, voice, backgroundMusic]);
+  }, [script, aspectRatio, creativeStyle, voice, backgroundMusic, videoModel, image, generationsLeft]);
 
   const Header = () => (
     <div className="text-center mb-8 md:mb-12">
@@ -63,14 +116,17 @@ const App: React.FC = () => {
               isLoading={isLoading}
               aspectRatio={aspectRatio}
               setAspectRatio={setAspectRatio}
-              videoLength={videoLength}
-              setVideoLength={setVideoLength}
               creativeStyle={creativeStyle}
               setCreativeStyle={setCreativeStyle}
               voice={voice}
               setVoice={setVoice}
+              videoModel={videoModel}
+              setVideoModel={setVideoModel}
               backgroundMusic={backgroundMusic}
               setBackgroundMusic={setBackgroundMusic}
+              image={image}
+              setImage={setImage}
+              generationsLeft={generationsLeft}
             />
           )}
           {isLoading && <LoadingDisplay message={loadingMessage} />}
