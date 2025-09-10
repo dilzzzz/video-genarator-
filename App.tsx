@@ -91,6 +91,21 @@ const App: React.FC = () => {
       setLoadingMessage('');
     }
   }, [script, aspectRatio, creativeStyle, voice, backgroundMusic, videoModel, image, generationsLeft]);
+  
+  const handleCreateAnother = useCallback(() => {
+    setScript('');
+    setAspectRatio('16:9');
+    setCreativeStyle('Cinematic');
+    setVoice('None');
+    setVideoModel('veo-2.0-generate-001');
+    setBackgroundMusic('');
+    setImage(null);
+    setOriginalScript('');
+    setIsLoading(false);
+    setLoadingMessage('');
+    setVideoUrl(null);
+    setError(null);
+  }, []);
 
   const Header = () => (
     <div className="text-center mb-8 md:mb-12">
@@ -137,7 +152,11 @@ const App: React.FC = () => {
             </div>
           )}
           {videoUrl && (
-            <VideoResult videoUrl={videoUrl} script={originalScript} />
+            <VideoResult 
+              videoUrl={videoUrl} 
+              script={originalScript} 
+              onCreateAnother={handleCreateAnother} 
+            />
           )}
         </main>
       </div>

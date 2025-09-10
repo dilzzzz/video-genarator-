@@ -133,30 +133,34 @@ export const ScriptInput: React.FC<ScriptInputProps> = ({
 
 
   return (
-    <div className="w-full max-w-2xl mx-auto bg-slate-800/50 rounded-xl p-6 shadow-lg border border-slate-700">
-      <label htmlFor="script-input" className="block text-lg font-medium text-slate-300 mb-2">
-        Your Script
-      </label>
-      <textarea
-        id="script-input"
-        value={script}
-        onChange={(e) => setScript(e.target.value)}
-        placeholder="e.g., A majestic eagle soaring through a cloudy sky during a golden sunset."
-        className="w-full h-40 p-4 bg-slate-900 border border-slate-600 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-shadow duration-200 text-slate-200 placeholder-slate-500 resize-none"
-        disabled={isLoading}
-      />
-      <p className="text-sm text-slate-500 mt-2">
-        Describe the scene, action, and mood. The more detailed your script, the better the result.
-      </p>
-
-      <div className="mt-6">
-        <label className="block text-lg font-medium text-slate-300 mb-3">
-          Reference Image (Optional)
+    <form onSubmit={(e) => { e.preventDefault(); onSubmit(); }} className="w-full max-w-2xl mx-auto bg-slate-800/50 rounded-xl p-6 shadow-lg border border-slate-700 space-y-6">
+      <div>
+        <label htmlFor="script-input" className="block text-lg font-medium text-slate-300 mb-2">
+          Your Script
         </label>
+        <textarea
+          id="script-input"
+          value={script}
+          onChange={(e) => setScript(e.target.value)}
+          placeholder="e.g., A majestic eagle soaring through a cloudy sky during a golden sunset."
+          className="w-full h-40 p-4 bg-slate-900 border border-slate-600 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-shadow duration-200 text-slate-200 placeholder-slate-500 resize-none"
+          disabled={isLoading}
+          required
+        />
+        <p className="text-sm text-slate-500 mt-2">
+          Describe the scene, action, and mood. The more detailed your script, the better the result.
+        </p>
+      </div>
+
+      <div>
+        <span className="block text-lg font-medium text-slate-300 mb-3">
+          Reference Image (Optional)
+        </span>
         {image ? (
           <div className="relative group">
             <img src={`data:image/jpeg;base64,${image}`} alt="Captured reference" className="rounded-lg w-full max-h-60 object-contain bg-slate-900" />
             <button 
+              type="button"
               onClick={() => { setImage(null); }}
               className="absolute top-2 right-2 bg-black/50 text-white rounded-full p-2 hover:bg-black/75 transition-colors"
               aria-label="Remove Image"
@@ -173,10 +177,12 @@ export const ScriptInput: React.FC<ScriptInputProps> = ({
               ref={fileInputRef}
               onChange={handleFileChange}
               accept="image/jpeg,image/png,image/webp"
-              style={{ display: 'none' }}
+              className="sr-only"
               aria-hidden="true"
+              tabIndex={-1}
             />
             <button 
+              type="button"
               onClick={() => fileInputRef.current?.click()}
               disabled={isLoading}
               className="w-full flex-1 flex items-center justify-center space-x-2 px-4 py-2 rounded-md font-medium transition-all duration-200 bg-slate-700 hover:bg-slate-600 text-slate-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 focus:ring-offset-slate-900 disabled:opacity-50"
@@ -187,6 +193,7 @@ export const ScriptInput: React.FC<ScriptInputProps> = ({
               <span>Upload File</span>
             </button>
             <button 
+              type="button"
               onClick={openCamera} 
               disabled={isLoading} 
               className="w-full flex-1 flex items-center justify-center space-x-2 px-4 py-2 rounded-md font-medium transition-all duration-200 bg-slate-700 hover:bg-slate-600 text-slate-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 focus:ring-offset-slate-900 disabled:opacity-50"
@@ -203,84 +210,95 @@ export const ScriptInput: React.FC<ScriptInputProps> = ({
         )}
       </div>
 
-      <div className="mt-6">
-        <label className="block text-lg font-medium text-slate-300 mb-3">
-          Aspect Ratio
-        </label>
+      <fieldset>
+        <legend className="block text-lg font-medium text-slate-300 mb-3">Aspect Ratio</legend>
         <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
           {aspectRatios.map(({ value, label }) => (
-            <button
-              key={value}
-              type="button"
-              onClick={() => setAspectRatio(value)}
-              disabled={isLoading}
-              className={`w-full sm:w-auto flex-1 text-center px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 focus:ring-offset-slate-900 disabled:opacity-50 ${
-                aspectRatio === value
-                  ? 'bg-purple-600 text-white shadow-lg'
-                  : 'bg-slate-700 hover:bg-slate-600 text-slate-300'
-              }`}
-            >
-              {label} <span className="text-slate-400">({value})</span>
-            </button>
+            <div key={value} className="flex-1">
+              <input
+                type="radio"
+                id={`aspect-${value}`}
+                name="aspectRatio"
+                value={value}
+                checked={aspectRatio === value}
+                onChange={() => setAspectRatio(value)}
+                disabled={isLoading}
+                className="sr-only peer"
+              />
+              <label
+                htmlFor={`aspect-${value}`}
+                className="w-full block text-center cursor-pointer px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 focus:outline-none ring-2 ring-transparent peer-focus:ring-purple-500 peer-focus:ring-offset-2 peer-focus:ring-offset-slate-900 bg-slate-700 text-slate-300 hover:bg-slate-600 peer-checked:bg-purple-600 peer-checked:text-white peer-checked:shadow-lg peer-disabled:opacity-50 peer-disabled:cursor-not-allowed"
+              >
+                {label} <span className="text-slate-400">({value})</span>
+              </label>
+            </div>
           ))}
         </div>
-      </div>
+      </fieldset>
 
-      <div className="mt-6">
-        <label className="block text-lg font-medium text-slate-300 mb-3">
-          Video Model
-        </label>
+      <fieldset>
+        <legend className="block text-lg font-medium text-slate-300 mb-3">Video Model</legend>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
           {videoModels.map(({ value, label, description }) => (
-            <button
-              key={value}
-              type="button"
-              onClick={() => setVideoModel(value)}
-              disabled={isLoading}
-              title={description}
-              className={`w-full text-center px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 focus:ring-offset-slate-900 disabled:opacity-50 ${
-                videoModel === value
-                  ? 'bg-purple-600 text-white shadow-lg'
-                  : 'bg-slate-700 hover:bg-slate-600 text-slate-300'
-              }`}
-            >
-              {label}
-            </button>
+            <div key={value}>
+              <input
+                type="radio"
+                id={`model-${value}`}
+                name="videoModel"
+                value={value}
+                checked={videoModel === value}
+                onChange={() => setVideoModel(value)}
+                disabled={isLoading}
+                className="sr-only peer"
+              />
+              <label
+                htmlFor={`model-${value}`}
+                title={description}
+                className="w-full block text-center cursor-pointer px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 focus:outline-none ring-2 ring-transparent peer-focus:ring-purple-500 peer-focus:ring-offset-2 peer-focus:ring-offset-slate-900 bg-slate-700 text-slate-300 hover:bg-slate-600 peer-checked:bg-purple-600 peer-checked:text-white peer-checked:shadow-lg peer-disabled:opacity-50 peer-disabled:cursor-not-allowed"
+              >
+                {label}
+              </label>
+            </div>
           ))}
         </div>
         <p className="text-sm text-slate-500 mt-2">
           Select the AI model for video generation. Newer models may offer higher quality at the cost of generation time.
         </p>
-      </div>
+      </fieldset>
 
-      <div className="mt-6">
-        <label className="block text-lg font-medium text-slate-300 mb-3">
-          Voiceover
-        </label>
+      <fieldset>
+        <legend className="block text-lg font-medium text-slate-300 mb-3">Voiceover</legend>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
           {voiceOptions.map((option) => (
-            <button
-              key={option}
-              type="button"
-              onClick={() => setVoice(option)}
-              disabled={isLoading}
-              className={`w-full text-center px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 focus:ring-offset-slate-900 disabled:opacity-50 ${
-                voice === option
-                  ? 'bg-purple-600 text-white shadow-md'
-                  : 'bg-slate-700 hover:bg-slate-600 text-slate-300'
-              }`}
-            >
-              {option}
-            </button>
+             <div key={option}>
+              <input
+                type="radio"
+                id={`voice-${option}`}
+                name="voice"
+                value={option}
+                checked={voice === option}
+                onChange={() => setVoice(option)}
+                disabled={isLoading}
+                className="sr-only peer"
+              />
+              <label
+                htmlFor={`voice-${option}`}
+                className="w-full block text-center cursor-pointer px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 focus:outline-none ring-2 ring-transparent peer-focus:ring-purple-500 peer-focus:ring-offset-2 peer-focus:ring-offset-slate-900 bg-slate-700 text-slate-300 hover:bg-slate-600 peer-checked:bg-purple-600 peer-checked:text-white peer-checked:shadow-md peer-disabled:opacity-50 peer-disabled:cursor-not-allowed"
+              >
+                {option}
+              </label>
+            </div>
           ))}
         </div>
-      </div>
+      </fieldset>
 
-      <div className="mt-6 border-t border-slate-700 pt-6">
+      <div className="border-t border-slate-700 pt-6">
         <button
+          type="button"
           onClick={() => setIsAdvancedOpen(!isAdvancedOpen)}
           className="w-full flex justify-between items-center text-left text-lg font-medium text-slate-300 hover:text-white transition-colors"
           aria-expanded={isAdvancedOpen}
+          aria-controls="advanced-settings"
         >
           <span>Advanced Settings</span>
           <svg
@@ -289,65 +307,67 @@ export const ScriptInput: React.FC<ScriptInputProps> = ({
             stroke="currentColor"
             viewBox="0 0 24 24"
             xmlns="http://www.w3.org/2000/svg"
+            aria-hidden="true"
           >
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
           </svg>
         </button>
 
-        {isAdvancedOpen && (
-          <div className="mt-4 space-y-6">
-            <div>
-              <label className="block text-base font-medium text-slate-300 mb-3">
-                Creative Style
-              </label>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                {creativeStyles.map((style) => (
-                  <button
-                    key={style}
-                    type="button"
-                    onClick={() => setCreativeStyle(style)}
+        <div id="advanced-settings" className={`mt-4 space-y-6 ${isAdvancedOpen ? 'block' : 'hidden'}`}>
+          <fieldset>
+            <legend className="block text-base font-medium text-slate-300 mb-3">Creative Style</legend>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {creativeStyles.map((style) => (
+                <div key={style}>
+                  <input
+                    type="radio"
+                    id={`style-${style}`}
+                    name="creativeStyle"
+                    value={style}
+                    checked={creativeStyle === style}
+                    onChange={() => setCreativeStyle(style)}
                     disabled={isLoading}
-                    className={`w-full text-center px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 focus:ring-offset-slate-900 disabled:opacity-50 ${
-                      creativeStyle === style
-                        ? 'bg-purple-600 text-white shadow-md'
-                        : 'bg-slate-700 hover:bg-slate-600 text-slate-300'
-                    }`}
+                    className="sr-only peer"
+                  />
+                  <label
+                    htmlFor={`style-${style}`}
+                    className="w-full block text-center cursor-pointer px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 focus:outline-none ring-2 ring-transparent peer-focus:ring-purple-500 peer-focus:ring-offset-2 peer-focus:ring-offset-slate-900 bg-slate-700 text-slate-300 hover:bg-slate-600 peer-checked:bg-purple-600 peer-checked:text-white peer-checked:shadow-md peer-disabled:opacity-50 peer-disabled:cursor-not-allowed"
                   >
                     {style}
-                  </button>
-                ))}
-              </div>
+                  </label>
+                </div>
+              ))}
             </div>
-            <div>
-              <label htmlFor="background-music-prompt" className="block text-base font-medium text-slate-300 mb-2">
-                Background Music Prompt
-              </label>
-              <input
-                type="text"
-                id="background-music-prompt"
-                value={backgroundMusic}
-                onChange={(e) => setBackgroundMusic(e.target.value)}
-                placeholder="e.g., epic orchestral score, calming nature sounds"
-                className="w-full p-2 bg-slate-900 border border-slate-600 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-slate-200 placeholder-slate-500"
-                disabled={isLoading}
-              />
-              <p className="text-sm text-slate-500 mt-1">
-                Describe the music you'd like to accompany your video.
-              </p>
-            </div>
+          </fieldset>
+          <div>
+            <label htmlFor="background-music-prompt" className="block text-base font-medium text-slate-300 mb-2">
+              Background Music Prompt
+            </label>
+            <input
+              type="text"
+              id="background-music-prompt"
+              value={backgroundMusic}
+              onChange={(e) => setBackgroundMusic(e.target.value)}
+              placeholder="e.g., epic orchestral score, calming nature sounds"
+              className="w-full p-2 bg-slate-900 border border-slate-600 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-slate-200 placeholder-slate-500"
+              disabled={isLoading}
+            />
+            <p className="text-sm text-slate-500 mt-1">
+              Describe the music you'd like to accompany your video.
+            </p>
           </div>
-        )}
+        </div>
       </div>
 
-      <div className="mt-8 text-center">
+      <div className="text-center pt-2">
         <button
-          onClick={onSubmit}
+          type="submit"
           disabled={isLoading || generationsLeft <= 0}
           className="w-full inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 disabled:bg-slate-600 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 focus:ring-offset-slate-900 transition-all duration-300 transform hover:scale-105 disabled:scale-100"
         >
           {isLoading ? 'Generating...' : generationsLeft > 0 ? 'Create Video' : 'Daily Limit Reached'}
         </button>
-        <p className="text-sm text-slate-400 mt-3">
+        <p className="text-sm text-slate-400 mt-3" aria-live="polite">
           You have <span className="font-bold text-slate-300">{generationsLeft}</span> generation{generationsLeft !== 1 ? 's' : ''} left today.
         </p>
       </div>
@@ -357,12 +377,12 @@ export const ScriptInput: React.FC<ScriptInputProps> = ({
           <div className="bg-slate-800 p-4 rounded-lg shadow-2xl w-full max-w-lg mx-4">
             <video ref={videoRef} autoPlay playsInline className="w-full rounded bg-slate-900"></video>
             <div className="mt-4 flex justify-around space-x-2">
-              <button onClick={captureImage} className="flex-1 px-4 py-2 rounded-md font-medium text-white bg-purple-600 hover:bg-purple-700 transition-colors">Take Picture</button>
-              <button onClick={closeCamera} className="flex-1 px-4 py-2 rounded-md font-medium bg-slate-600 hover:bg-slate-500 text-slate-200 transition-colors">Cancel</button>
+              <button type="button" onClick={captureImage} className="flex-1 px-4 py-2 rounded-md font-medium text-white bg-purple-600 hover:bg-purple-700 transition-colors">Take Picture</button>
+              <button type="button" onClick={closeCamera} className="flex-1 px-4 py-2 rounded-md font-medium bg-slate-600 hover:bg-slate-500 text-slate-200 transition-colors">Cancel</button>
             </div>
           </div>
         </div>
       )}
-    </div>
+    </form>
   );
 };
