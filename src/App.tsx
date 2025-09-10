@@ -8,11 +8,6 @@ import { generateVideoFromScript } from './services/geminiService';
 const App: React.FC = () => {
   const [script, setScript] = useState<string>('');
   const [aspectRatio, setAspectRatio] = useState<string>('16:9');
-  const [creativeStyle, setCreativeStyle] = useState<string>('Cinematic');
-  const [voice, setVoice] = useState<string>('None');
-  const [videoModel, setVideoModel] = useState<string>('veo-2.0-generate-001');
-  const [backgroundMusic, setBackgroundMusic] = useState<string>('');
-  const [image, setImage] = useState<string | null>(null);
   const [originalScript, setOriginalScript] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [loadingMessage, setLoadingMessage] = useState<string>('');
@@ -67,7 +62,16 @@ const App: React.FC = () => {
     setOriginalScript(script);
 
     try {
-      const url = await generateVideoFromScript(script, aspectRatio, creativeStyle, voice, backgroundMusic, videoModel, image, setLoadingMessage);
+      const url = await generateVideoFromScript(
+        script, 
+        aspectRatio, 
+        'Cinematic', // creativeStyle
+        'None', // voice
+        '', // backgroundMusic
+        'veo-2.0-generate-001', // videoModel
+        null, // image
+        setLoadingMessage
+      );
       setVideoUrl(url);
 
       const today = getTodayDateString();
@@ -90,16 +94,11 @@ const App: React.FC = () => {
       setIsLoading(false);
       setLoadingMessage('');
     }
-  }, [script, aspectRatio, creativeStyle, voice, backgroundMusic, videoModel, image, generationsLeft]);
+  }, [script, aspectRatio, generationsLeft]);
   
   const handleCreateAnother = useCallback(() => {
     setScript('');
     setAspectRatio('16:9');
-    setCreativeStyle('Cinematic');
-    setVoice('None');
-    setVideoModel('veo-2.0-generate-001');
-    setBackgroundMusic('');
-    setImage(null);
     setOriginalScript('');
     setIsLoading(false);
     setLoadingMessage('');
@@ -131,16 +130,6 @@ const App: React.FC = () => {
               isLoading={isLoading}
               aspectRatio={aspectRatio}
               setAspectRatio={setAspectRatio}
-              creativeStyle={creativeStyle}
-              setCreativeStyle={setCreativeStyle}
-              voice={voice}
-              setVoice={setVoice}
-              videoModel={videoModel}
-              setVideoModel={setVideoModel}
-              backgroundMusic={backgroundMusic}
-              setBackgroundMusic={setBackgroundMusic}
-              image={image}
-              setImage={setImage}
               generationsLeft={generationsLeft}
             />
           )}
