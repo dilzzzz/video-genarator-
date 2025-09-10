@@ -44,11 +44,6 @@ export const generateVideoFromScript = async (
   setLoadingMessage: (message: string) => void
 ): Promise<string> => {
   try {
-    const apiKey = process.env.API_KEY;
-    if (!apiKey) {
-      throw new Error("API_KEY is not configured in the environment. The application cannot connect to the AI service.");
-    }
-    
     setLoadingMessage("Sending script to the AI director...");
 
     // Construct the prompt with all user-defined parameters
@@ -104,12 +99,23 @@ export const generateVideoFromScript = async (
       throw new Error("Video generation succeeded, but no download link was returned.");
     }
     
-    // The link provided by Gemini is a temporary URL that requires the API key for download.
+    // The browser can't fetch the video URL directly due to CORS.
+    // We'll use our own API endpoint as a proxy.
     setLoadingMessage("Downloading the final video...");
-    const videoResponse = await fetch(`${downloadLink}&key=${apiKey}`);
+
+    const videoResponse = await fetch('/api/downloadVideo', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ downloadLink }),
+    });
+
     if (!videoResponse.ok) {
-        throw new Error(`Failed to download video. Server responded with: ${videoResponse.statusText}`);
+        const errorData = await videoResponse.json().catch(() => ({ error: videoResponse.statusText }));
+        throw new Error(`Failed to download video via proxy: ${errorData.error || 'Unknown error'}`);
     }
+
 
     const videoBlob = await videoResponse.blob();
     const videoUrl = URL.createObjectURL(videoBlob);
